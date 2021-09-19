@@ -57,7 +57,7 @@ respectively."
     (progn (setq night/fzf-cmd (list (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
            (setq night/fzf-cmd-args '())))
 (defun night/helper-counsel-fzf-entries (str)
-  (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
+  (let ((default-directory "/") ; TRAMP: The point is default-directory. If it is local, your command runs locally
         (entries night/counsel--fzf-entries))
     (cond
      ((equal entries "MAGIC_CLIPBOARD_READ")
@@ -76,18 +76,24 @@ respectively."
          (-concat night/fzf-cmd (list "/tmp/nightFzf.txt") night/fzf-cmd-args (list "-f" str))
          )))))
   nil)
+
 (defun night/counsel-fzf-with-entries (entries &optional action prompt history)
   (interactive)
   (setq night/counsel--fzf-entries entries)
-  (ivy-read (or prompt "")
-            #'night/helper-counsel-fzf-entries
-            :initial-input ""
-            ;; :re-builder #'ivy--regex-fuzzy
-            :dynamic-collection t
-            :history (or history 'counsel-fzf-history)
-            :unwind #'counsel-delete-process
-            :action (or action #'counsel-fzf-action)
-            :caller 'counsel-fzf))
+  (let (
+        ;; (ivy-truncate-lines nil
+        ;;                     ;; feel free to cancel this patch, I am not sure if it is a good idea
+        ;;                     )
+        )
+    (ivy-read (or prompt "")
+              #'night/helper-counsel-fzf-entries
+              :initial-input ""
+              ;; :re-builder #'ivy--regex-fuzzy
+              :dynamic-collection t
+              :history (or history 'counsel-fzf-history)
+              :unwind #'counsel-delete-process
+              :action (or action #'counsel-fzf-action)
+              :caller 'counsel-fzf)))
 ;;;
 (defun night/dir-list (dir &rest args)
   (interactive)
@@ -122,18 +128,19 @@ respectively."
 
 (defun night/fzf-recentf ()
   (interactive)
-  (night/counsel-fzf-with-entries
-   ;; recentf-list
-   (if vfiles
-       (-concat recentf-list vfiles)
-     (progn
-       ;; (z bello)
-       recentf-list))
-   ;; vfiles
-   (lambda (f) (progn
-                 ;; (message "DBG: %s" f )
-                 (find-file-existing f)))
-   counsel-recent-files-history))
+  (let ((ivy-truncate-lines nil))
+    (night/counsel-fzf-with-entries
+     ;; recentf-list
+     (if vfiles
+         (-concat recentf-list vfiles)
+       (progn
+         ;; (z bello)
+         recentf-list))
+     ;; vfiles
+     (lambda (f) (progn
+                   ;; (message "DBG: %s" f )
+                   (find-file-existing f)))
+     counsel-recent-files-history)))
 ;;;
 ;; @solvedBug https://github.com/abo-abo/swiper/issues/2830 previous ivy-read dynamic collection pollutes new calls to ivy-read : use `:unwind #'counsel-delete-process`
 (defun night/fzf-M-x (&optional initial-input)
