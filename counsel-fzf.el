@@ -110,7 +110,7 @@ respectively."
     (setq vfiles (let
                      ;; `ec $textglob | sd -s '|' '\\|'`
                      ((re "\\.(txt\\|md\\|org\\|m\\|cpp\\|h\\|c\\|applescript\\|as\\|osa\\|nu\\|nush\\|el\\|ss\\|scm\\|lisp\\|rkt\\|py\\|jl\\|scala\\|sc\\|kt\\|kotlin\\|java\\|clj\\|cljs\\|rkt\\|js\\|rs\\|zsh\\|dash\\|bash\\|sh\\|ml\\|php\\|lua\\|glsl\\|frag\\|go\\|ini\\|json\\|cson\\|toml\\|conf\\|plist\\|xml)$"))
-                   (mapcar #'abbreviate-file-name ;; terrible @perf, but idk how to improve it. So for now, we can just call this manually save it to the recentf list.
+                   (mapcar #'abbreviate-file-name ;; terrible @perf, but idk how to improve it. So for now, we can just call this manually every once in a while.
                            (-concat
                             (night/dir-list (getenv "NIGHTDIR") re)
                             (night/dir-list (getenv "DOOMDIR") re)
@@ -119,12 +119,12 @@ respectively."
                             (night/dir-list (concat (getenv "codedir") "/lua") re)
                             (night/dir-list (concat (getenv "codedir") "/python") re)
                             (night/dir-list (concat (getenv "codedir") "/uni") re)
+                            (night/dir-list (concat (getenv "codedir") "/Clj") re)
                             (night/dir-list (concat (getenv "codedir") "/rust") re)
                             (night/dir-list (concat (getenv "codedir") "/golang") re)))))
-    (nconc recentf-list vfiles)         ; adds vfiles to the end of recentf-list
+    (nconc recentf-list vfiles)         ;; adds vfiles to the end of recentf-list
     (recentf-cleanup)
-    (recentf-save-list)
-    ))
+    (recentf-save-list)))
 
 (defun night/fzf-recentf ()
   (interactive)
@@ -228,7 +228,12 @@ when available, in that order of precedence."
    )
   )
 ;; (map! :leader "zp" #'night/counsel-clipboard)
-(map! :nvig "C-p" #'night/counsel-clipboard)
+(map! :nvig "C-p"
+      #'night/counsel-clipboard
+      ;;; @alt
+      ;; [[https://github.com/minad/consult/issues/441][doesn't work with ivy active]]
+      ;; 'consult-yank-from-kill-ring
+      )
 ;; (map! :nvig "C-v" #'night/counsel-clipboard)
 
 ;;;
