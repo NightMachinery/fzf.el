@@ -4,58 +4,10 @@
   "History for `counsel-recent-files-history'.")
 (defvar counsel-fzf-history nil
   "General history for counsel fzf commands that have not used a more specific history.")
+(defvar night/fzf-cmd (list (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
+(defvar night/fzf-cmd-args '())
+(defvar night/counsel--fzf-entries nil)
 ;;;
-(comment (defun counsel--async-command-1 (cmd &optional sentinel filter name)
-           "Start and return new counsel process by calling CMD.
-CMD can be either a shell command as a string, or a list of the
-program name to be called directly, followed by its arguments.
-If the default counsel process or one with NAME already exists,
-kill it and its associated buffer before starting a new one.
-Give the process the functions SENTINEL and FILTER, which default
-to `counsel--async-sentinel' and `counsel--async-filter',
-respectively."
-           (counsel-delete-process name)
-           (setq name (or name " *counsel*"))
-           (when (get-buffer name)
-             (kill-buffer name))
-           (setq counsel--async-last-command cmd)
-           (let* ((process-connection-type nil)
-                  (buf (get-buffer-create name))
-                  (proc (if (listp cmd)
-                            (apply #'start-file-process name buf cmd)
-                          (start-file-process-shell-command name buf cmd)
-                          )))
-             (setq counsel--async-time (current-time))
-             (setq counsel--async-start counsel--async-time)
-             (set-process-sentinel proc (or sentinel #'counsel--async-sentinel))
-             (set-process-filter proc (or filter #'counsel--async-filter))
-             (when (boundp 'night/counsel--stdin)
-               (progn
-                 ;; (message "DBG: %s, %s" buf proc)
-                 (process-send-string buf (or night/counsel--stdin ""))
-                 (process-send-eof proc)
-                 ))
-             proc))
-         )
-;;;
-(comment
- (defun night/helper-counsel-fzf-entries (str)
-   (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
-         (entries night/counsel--fzf-entries))
-     (setq ivy--old-re (ivy--regex-fuzzy str))
-     (setq night/counsel--stdin (mapconcat (lambda (x) x) entries "\n"))
-     (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
-       (counsel--async-command
-        (list "fzf_in.dash" "-f" str)
-        ;; (format (concat  "echo %s | " counsel-fzf-cmd) (shell-quote-argument (mapconcat (lambda (x) x) entries "\n")) str)
-        ;; (format "echo hi %s wow | cat" str)
-        )))
-   nil)
- )
-;;;
-(if load-file-name
-    (progn (setq night/fzf-cmd (list (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
-           (setq night/fzf-cmd-args '())))
 (defun night/helper-counsel-fzf-entries (str)
   (let ((default-directory "/") ; TRAMP: The point is default-directory. If it is local, your command runs locally
         (entries night/counsel--fzf-entries))
@@ -109,13 +61,14 @@ respectively."
   (when (and (stringp (getenv "NIGHTDIR")))
     (setq vfiles (let
                      ;; `ec $textglob | sd -s '|' '\\|'`
-                     ((re "\\.(txt\\|md\\|org\\|m\\|cpp\\|h\\|c\\|applescript\\|as\\|osa\\|nu\\|nush\\|el\\|ss\\|scm\\|lisp\\|rkt\\|py\\|jl\\|scala\\|sc\\|kt\\|kotlin\\|java\\|clj\\|cljs\\|rkt\\|js\\|rs\\|zsh\\|dash\\|bash\\|sh\\|ml\\|php\\|lua\\|glsl\\|frag\\|go\\|ini\\|json\\|cson\\|toml\\|conf\\|plist\\|xml)$"))
+                     ((re "\\.\\(txt\\|md\\|org\\|m\\|cpp\\|h\\|c\\|pl\\|applescript\\|as\\|osa\\|nu\\|nush\\|el\\|ss\\|scm\\|lisp\\|rkt\\|py\\|jl\\|scala\\|sc\\|kt\\|kotlin\\|java\\|clj\\|cljs\\|rkt\\|js\\|rs\\|zsh\\|dash\\|bash\\|sh\\|ml\\|php\\|lua\\|glsl\\|frag\\|go\\|ini\\|json\\|cson\\|toml\\|conf\\|plist\\|xml\\)$"))
                    (mapcar #'abbreviate-file-name ;; terrible @perf, but idk how to improve it. So for now, we can just call this manually every once in a while.
                            (-concat
                             (night/dir-list (getenv "NIGHTDIR") re)
                             (night/dir-list (getenv "DOOMDIR") re)
                             (night/dir-list (getenv "nightNotes") re)
                             (night/dir-list (concat (getenv "codedir") "/nodejs") re)
+                            (night/dir-list (concat (getenv "codedir") "/julia") re)
                             (night/dir-list (concat (getenv "codedir") "/lua") re)
                             (night/dir-list (concat (getenv "codedir") "/python") re)
                             (night/dir-list (concat (getenv "codedir") "/uni") re)
@@ -182,37 +135,41 @@ when available, in that order of precedence."
 (defun night/counsel-clipboard ()
   "Interactively paste. Multiple selections are, of course, possible (see ivy-mark). Use C-o to see other options including copying the selection."
   (interactive)
-  ;; let doesn't work for this
-  (setq night/counsel--fzf-entries "MAGIC_CLIPBOARD_READ")
-  (ivy-read "Clipboard: "
-            #'night/helper-counsel-fzf-entries
-            :require-match t
-            :history 'counsel-clipboard-history
-            :action #'night/insert-from-clipboard
-            :multi-action #'night/insert-multiple
-            :dynamic-collection t
-            :unwind #'counsel-delete-process
-            ;; :caller 'counsel-register
-            :caller 'night/counsel-clipboard
-            ))
+  (let ((night/fzf-cmd-args (-concat night/fzf-cmd-args (list "--exact")))
+        (night/counsel--fzf-entries "MAGIC_CLIPBOARD_READ"))
+    (ivy-read "Clipboard: "
+              #'night/helper-counsel-fzf-entries
+              :require-match t
+              :history 'counsel-clipboard-history
+              :action #'night/insert-from-clipboard
+              :multi-action #'night/insert-multiple
+              :dynamic-collection t
+              :unwind #'counsel-delete-process
+              ;; :caller 'counsel-register
+              :caller 'night/counsel-clipboard)
+    ))
 
 (after! (counsel)
   (add-to-list 'counsel-async-split-string-re-alist '(night/counsel-clipboard . "\x00"))
   (add-to-list 'ivy-re-builders-alist '(night/counsel-clipboard . ivy--regex-plus))
   )
 
+(defun night/evil-region-delete-on-visual-paste ()
+  ;; See evil-visual-paste
+  (when (evil-visual-state-p)
+    ;; (z fsay hello)
+    (evil-delete evil-visual-beginning
+                 evil-visual-end
+                 (evil-visual-type)
+                 (unless evil-kill-on-visual-paste ?_))))
+
 (defun night/insert-from-clipboard (input)
   (let ((items (if (listp input)
                    input
                  (list input)))
         (res ""))
-    ;; See evil-visual-paste
-    (when (evil-visual-state-p)
-      ;; (z fsay hello)
-      (evil-delete evil-visual-beginning
-                   evil-visual-end
-                   (evil-visual-type)
-                   (unless evil-kill-on-visual-paste ?_)))
+
+    (night/evil-region-delete-on-visual-paste)
 
     (dolist (item items)
       (let ((parts (split-string item "" t)))
@@ -228,12 +185,15 @@ when available, in that order of precedence."
    )
   )
 ;; (map! :leader "zp" #'night/counsel-clipboard)
-(map! :nvig "C-p"
-      #'night/counsel-clipboard
-      ;;; @alt
-      ;; [[https://github.com/minad/consult/issues/441][doesn't work with ivy active]]
-      ;; 'consult-yank-from-kill-ring
-      )
+(with-eval-after-load 'night/helm-fzf
+  (map! :nvig "C-p"
+        #'night/helm-clipboard
+        ;; #'night/counsel-clipboard
+        ;; #'helm-show-kill-ring       ;; does not capture OS copies
+;;; @alt
+        ;; [[https://github.com/minad/consult/issues/441][doesn't work with ivy active]]
+        ;; 'consult-yank-from-kill-ring
+        ))
 ;; (map! :nvig "C-v" #'night/counsel-clipboard)
 
 ;;;
