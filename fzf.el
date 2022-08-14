@@ -45,6 +45,7 @@
 
 (require 'subr-x)
 (require 'f)
+(require 's)
 (require 'dash)
 
 
@@ -295,13 +296,25 @@
    (list "a" "b" "c")
    (lambda (x) (print x))))
 
-(when load-file-name
-  (load-file (concat (file-name-directory load-file-name)
-                     "/counsel-fzf.el"
-                     ))
-  (load-file (concat (file-name-directory load-file-name)
-                     "/helm-fzf.el"
-                     ))
+(when (and load-file-name
+           (not (s-blank? load-file-name)))
+  (let* ((fzf-dir (file-name-directory load-file-name))
+         (counsel-fzf-path
+          (concat fzf-dir
+                  ;; "/counsel-fzf.el"
+                  "counsel-fzf.el"      ;; @upstreamBug/regression Double slashes are treated as the root in the GUI emacs.
+                  ))
+         (helm-fzf-path
+          (concat fzf-dir
+                       ;; "/helm-fzf.el"
+                       "helm-fzf.el"
+                       )))
+    ;; (message "fzf.el: load-file-name=%s" load-file-name)
+    ;; (message "fzf.el: fzf-dir=%s" fzf-dir)
+    ;; (message "fzf.el: counsel-fzf-path=%s" counsel-fzf-path)
+
+    (load-file counsel-fzf-path)
+    (load-file helm-fzf-path))
   )
 ;;;
 (provide 'fzf)
