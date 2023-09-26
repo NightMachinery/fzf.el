@@ -63,7 +63,7 @@
   :type 'string
   :group 'fzf)
 
-(defcustom fzf/args "--color light --print-query --reverse"
+(defcustom fzf/args "--exact --color light --print-query --reverse"
   "Additional arguments to pass into fzf."
   :type 'string
   :group 'fzf)
