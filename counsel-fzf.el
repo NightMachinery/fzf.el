@@ -188,16 +188,19 @@ when available, in that order of precedence."
 (with-eval-after-load 'night/helm-fzf
   (map!
    :nvig "C-p"
-   #'night/helm-clipboard
+   ;; #'night/helm-clipboard
+   ;; `night/helm-clipboard' was used before switching to consult.
+   ;;
    ;; #'night/counsel-clipboard
    ;; #'helm-show-kill-ring       ;; does not capture OS copies
 ;;; @alt
-   ;; [[https://github.com/minad/consult/issues/441][doesn't work with ivy active]]
-   ;; 'consult-yank-from-kill-ring
+   #'consult-yank-from-kill-ring
 
    :map evil-ex-completion-map
    :nvig "C-p"
-   #'night/helm-clipboard))
+   ;; #'night/helm-clipboard
+   #'consult-yank-from-kill-ring
+   ))
 ;; (map! :nvig "C-v" #'night/counsel-clipboard)
 
 ;;;
