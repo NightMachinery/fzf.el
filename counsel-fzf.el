@@ -187,16 +187,20 @@ when available, in that order of precedence."
 ;; (map! :leader "zp" #'night/counsel-clipboard)
 (with-eval-after-load 'night/helm-fzf
   (map!
-   :nvig "C-p"
-   ;; #'night/helm-clipboard
+   :nvig "C-S-p"
+   #'night/helm-clipboard
    ;; `night/helm-clipboard' was used before switching to consult.
    ;;
    ;; #'night/counsel-clipboard
    ;; #'helm-show-kill-ring       ;; does not capture OS copies
-;;; @alt
+
+   :nvig "C-p"
    #'consult-yank-from-kill-ring
 
    :map evil-ex-completion-map
+   :nvig "C-S-p"
+   #'night/helm-clipboard
+
    :nvig "C-p"
    ;; #'night/helm-clipboard
    #'consult-yank-from-kill-ring
