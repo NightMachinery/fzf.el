@@ -195,7 +195,7 @@ when available, in that order of precedence."
    ;; #'helm-show-kill-ring       ;; does not capture OS copies
 
    :nvig "C-p"
-   #'consult-yank-from-kill-ring
+   #'night/consult-yank-from-kill-ring
 
    :map evil-ex-completion-map
    :nvig "C-S-p"
@@ -203,7 +203,7 @@ when available, in that order of precedence."
 
    :nvig "C-p"
    ;; #'night/helm-clipboard
-   #'consult-yank-from-kill-ring
+   #'night/consult-yank-from-kill-ring
    ))
 ;; (map! :nvig "C-v" #'night/counsel-clipboard)
 
