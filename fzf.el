@@ -63,7 +63,9 @@
   :type 'string
   :group 'fzf)
 
-(defcustom fzf/args "--exact --color light --print-query --reverse"
+(defcustom fzf/args "--exact --color light --print-query --reverse --tiebreak=length,begin"
+  ;; `night/browse-dir' sets some arguments such as `--tiebreak` itself which will override args set here.
+  ;; --reverse seems useless now that we are using emacs as UI ...
   "Additional arguments to pass into fzf."
   :type 'string
   :group 'fzf)
